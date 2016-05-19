@@ -4,7 +4,7 @@ namespace Undemanding\Client;
 
 use GuzzleHttp\Client;
 use InvalidArgumentException;
-use PHPUnit_Framework_ExpectationFailedException;
+use Undemanding\Client\Exception\Assertion;
 
 class Page
 {
@@ -352,14 +352,14 @@ class Page
      *
      * @return $this
      *
-     * @throws PHPUnit_Framework_ExpectationFailedException
+     * @throws Assertion
      */
     public function see($expected)
     {
         $body = $this->body();
 
         if (strpos($body, $expected) === false) {
-            throw new PHPUnit_Framework_ExpectationFailedException("'" . $expected . "' not found");
+            throw new Assertion("'" . $expected . "' not found");
         }
 
         return $this;
@@ -370,14 +370,14 @@ class Page
      *
      * @return $this
      *
-     * @throws PHPUnit_Framework_ExpectationFailedException
+     * @throws Assertion
      */
     public function doNotSee($expected)
     {
         $body = $this->body();
 
         if (strpos($body, $expected) !== false) {
-            throw new PHPUnit_Framework_ExpectationFailedException("'" . $expected . "' found");
+            throw new Assertion("'" . $expected . "' found");
         }
 
         return $this;
@@ -410,6 +410,11 @@ class Page
         return $this;
     }
 
+    /**
+     * Displays a preview image of the current screen.
+     *
+     * @return $this
+     */
     public function preview()
     {
         $name = "/tmp/" . time() . ".png";
