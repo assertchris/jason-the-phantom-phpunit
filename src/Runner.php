@@ -76,8 +76,8 @@ class Runner
     public function stop()
     {
         if ($this->pid) {
-            $command = "kill " . $this->pid;
-            exec($command);
+            $command = "kill {$this->pid} > /dev/null 2> /dev/null";
+            @exec($command, $output);
         }
     }
 }
