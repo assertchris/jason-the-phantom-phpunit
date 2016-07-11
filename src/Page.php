@@ -24,11 +24,6 @@ class Page
     private $id;
 
     /**
-     * @var int
-     */
-    private $eventId = 1;
-
-    /**
      * @param Client $client
      * @param Session $session
      * @param int $id
@@ -49,7 +44,7 @@ class Page
     public static function create(Client $client, Session $session)
     {
         $response = $client->request(
-            "POST", "/session/" . $session->id() . "/page"
+            'POST', sprintf('/session/%s/page', $session->id())
         );
 
         $json = json_decode(
@@ -81,7 +76,7 @@ class Page
     private function view()
     {
         $response = $this->client->request(
-            "GET", $this->endpoint("view")
+            'GET', $this->endpoint('view')
         );
 
         $json = json_decode(
@@ -100,29 +95,29 @@ class Page
      */
     private function endpoint($type)
     {
-        if ($type == "list") {
-            return "/session/" . $this->session->id() . "/page";
+        if ($type == 'list') {
+            return sprintf('/session/%s/page', $this->session->id());
         }
 
-        if ($type == "view") {
-            return "/session/" . $this->session->id() . "/page/" . $this->id;
+        if ($type == 'view') {
+            return sprintf('/session/%s/page/%s', $this->session->id(), $this->id);
         }
 
         $actions = [
-            "zoom",
-            "resize",
-            "scroll",
-            "capture",
-            "run",
-            "visit",
-            "wait",
+            'zoom',
+            'resize',
+            'scroll',
+            'capture',
+            'run',
+            'visit',
+            'wait',
         ];
 
         if (in_array($type, $actions)) {
-            return "/session/" . $this->session->id() . "/page/" . $this->id . "/" . $type;
+            return sprintf('/session/%s/page/%s/%s', $this->session->id(), $this->id, $type);
         }
 
-        throw new InvalidArgumentException("unsupported type");
+        throw new InvalidArgumentException(sprintf('"%s" is not supported', $type));
     }
 
     /**
@@ -190,10 +185,10 @@ class Page
     public function resize($width, $height)
     {
         $this->client->request(
-            "POST", $this->endpoint("resize"), [
-                "form_params" => [
-                    "width" => $width,
-                    "height" => $height,
+            'POST', $this->endpoint('resize'), [
+                'form_params' => [
+                    'width' => $width,
+                    'height' => $height,
                 ],
             ]
         );
@@ -242,10 +237,10 @@ class Page
     public function scroll($left, $top)
     {
         $this->client->request(
-            "POST", $this->endpoint("scroll"), [
-                "form_params" => [
-                    "left" => $left,
-                    "top" => $top,
+            'POST', $this->endpoint('scroll'), [
+                'form_params' => [
+                    'left' => $left,
+                    'top' => $top,
                 ],
             ]
         );
@@ -262,9 +257,9 @@ class Page
     {
         if ($zoom) {
             $this->client->request(
-                "POST", $this->endpoint("zoom"), [
-                    "form_params" => [
-                        "zoom" => $zoom,
+                'POST', $this->endpoint('zoom'), [
+                    'form_params' => [
+                        'zoom' => $zoom,
                     ],
                 ]
             );
@@ -283,9 +278,9 @@ class Page
     public function visit($address)
     {
         $this->client->request(
-            "POST", $this->endpoint("visit"), [
-                "form_params" => [
-                    "address" => $address,
+            'POST', $this->endpoint('visit'), [
+                'form_params' => [
+                    'address' => $address,
                 ],
             ]
         );
@@ -301,9 +296,9 @@ class Page
     public function run($script)
     {
         $this->client->request(
-            "POST", $this->endpoint("run"), [
-                "form_params" => [
-                    "script" => $script,
+            'POST', $this->endpoint('run'), [
+                'form_params' => [
+                    'script' => $script,
                 ],
             ]
         );
@@ -320,10 +315,10 @@ class Page
     public function wait($frequency = 50, $timeout = 250)
     {
         $this->client->request(
-            "POST", $this->endpoint("wait"), [
-                "form_params" => [
-                    "frequency" => $frequency,
-                    "timeout" => $timeout,
+            'POST', $this->endpoint('wait'), [
+                'form_params' => [
+                    'frequency' => $frequency,
+                    'timeout' => $timeout,
                 ],
             ]
         );
@@ -337,7 +332,7 @@ class Page
     public function capture()
     {
         $response = $this->client->request(
-            "POST", $this->endpoint("capture")
+            'POST', $this->endpoint('capture')
         );
 
         $json = json_decode(
@@ -359,7 +354,7 @@ class Page
         $body = $this->body();
 
         if (strpos($body, $expected) === false) {
-            throw new Assertion("'" . $expected . "' not found");
+            throw new Assertion(sprintf('"%s" not found', $expected));
         }
 
         return $this;
@@ -377,7 +372,7 @@ class Page
         $body = $this->body();
 
         if (strpos($body, $expected) !== false) {
-            throw new Assertion("'" . $expected . "' found");
+            throw new Assertion(sprintf('"%s" found', $expected));
         }
 
         return $this;
@@ -390,22 +385,50 @@ class Page
      */
     public function click($selector)
     {
-        $nextId = $this->eventId++;
+        $this->run(sprintf(
+            '$("%s")
+                .trigger("mousedown")
+                .trigger("mouseup")
+                .trigger("click")
+            ;',
+            addslashes($selector)
+        ));
 
-        $this->run("
-            var event" . $nextId . " = document.createEvent('MouseEvent');
+        return $this;
+    }
 
-            event" . $nextId . ".initMouseEvent(
-                'click',
-                true /* bubbles */,
-                true /* cancelable */,
-                window
+    /**
+     * @param string $selector
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function fill($selector, $value)
+    {
+        $this->run(sprintf(
+            '$("%s").val("%s");',
+            addslashes($selector),
+            addslashes($value)
+        ));
+
+        foreach (str_split($value) as $index => $character) {
+            $properties = sprintf(
+                '{keyCode: "%1$s".charCodeAt(0), key: "%1$s", which: "%1$s"}',
+                $character
             );
 
-            var element" . $nextId . " = document.querySelector('" . $selector . "');
+            $this->run(sprintf(
+                '$("%1$s")
+                    .trigger("keydown", %2$s)
+                    .trigger("keyup", %2$s)
+                    .trigger("keypress", %2$s)
+                ;',
+                addslashes($selector),
+                $properties
+            ));
+        }
 
-            element" . $nextId . ".dispatchEvent(event" . $nextId . ");
-        ");
+        $this->run(sprintf('$("%s").trigger("change");', addslashes($selector)));
 
         return $this;
     }
@@ -417,13 +440,11 @@ class Page
      */
     public function preview()
     {
-        $name = "/tmp/" . time() . ".png";
-
+        $name = sprintf('/tmp/%s.png', time());
         $data = $this->capture();
+
         file_put_contents($name, base64_decode($data));
-
-        @exec("/usr/bin/qlmanage -p " . $name . " 2> /dev/null");
-
+        exec(sprintf('/usr/bin/qlmanage -p %s > /dev/null 2> /dev/null', $name));
         unlink($name);
 
         return $this;

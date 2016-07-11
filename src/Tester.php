@@ -111,10 +111,11 @@ trait Tester
      */
     protected function visit($address)
     {
-        $host = static::undemandingHost();
-        $port = static::undemandingPort();
-
-        $base = "http://" . $host . ":" . $port;
+        $base = sprintf(
+            'http://%s:%s',
+            static::undemandingHost(),
+            static::undemandingPort()
+        );
 
         if (!$this->undemandingClient) {
             $this->undemandingClient = $this->createUndemandingClient($base);
@@ -134,7 +135,9 @@ trait Tester
      */
     private function createUndemandingClient($base)
     {
-        return new Client(["base_uri" => $base]);
+        return new Client([
+            'base_uri' => $base,
+        ]);
     }
 
     /**

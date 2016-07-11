@@ -13,7 +13,6 @@ $session = Session::create($client);
 $page = Page::create($client, $session);
 
 $page
-    ->visit('http://localhost:5432')
-    ->run('document.body.innerHTML = "hello chris"')
-    ->resize(1024, 768)->zoom(2)
+    ->run('$(document.body).html("<textarea></textarea>")')
+    ->fill('textarea', 'hello world')
     ->preview();

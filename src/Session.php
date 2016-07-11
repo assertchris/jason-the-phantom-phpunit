@@ -34,7 +34,7 @@ class Session
     public static function create(Client $client)
     {
         $response = $client->request(
-            "POST", "/session"
+            'POST', '/session'
         );
 
         $json = json_decode(
@@ -58,7 +58,7 @@ class Session
     public function close()
     {
         $this->client->request(
-            "POST", "/session/" . $this->id . "/close"
+            'POST', sprintf('/session/%s/close', $this->id)
         );
 
         return $this;

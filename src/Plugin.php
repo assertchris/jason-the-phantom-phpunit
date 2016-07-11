@@ -12,8 +12,8 @@ class Plugin implements PluginInterface
     {
         $previous = getcwd();
 
-        chdir(realpath(__DIR__ . "/../"));
-        exec("npm install");
+        chdir(realpath(sprintf('%s/../', __DIR__)));
+        exec('npm install');
 
         chdir($previous);
     }
